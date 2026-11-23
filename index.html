@@ -1,0 +1,180 @@
+<title>T-Minus Lock Screen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one phone-ratio lock screen. Top third stays clear for the OS clock, the countdown sits below it, a milestone ladder follows, and the bottom strip stays clear for the flashlight and camera buttons. Editing tools live below the screen. */
+:root{
+  --ink:#0C1230; --ink2:#1A2356; --text:#EDF1FF; --dim:#8D98C4; --line:#2E3A78; --accent:#FF9A6B; --panel:#141C45;
+  --display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  color-scheme:dark;
+}
+body{background:var(--ink);color:var(--text);font-family:var(--body);padding-block:0}
+*{box-sizing:border-box}
+.stage{display:flex;flex-direction:column;align-items:center;gap:18px;padding-block:24px}
+.screen{
+  container-type:size;position:relative;height:min(844px,calc(100svh - 32px));width:auto;max-width:100%;aspect-ratio:390/844;
+  border-radius:44px;overflow:hidden;display:flex;flex-direction:column;
+  background:linear-gradient(172deg,var(--ink2) 0%,var(--ink) 64%);
+  box-shadow:0 0 0 1px var(--line);
+}
+.pad{padding-left:max(7cqw,env(safe-area-inset-left,0px));padding-right:max(7cqw,env(safe-area-inset-right,0px))}
+.clockzone{flex:0 0 31%;position:relative}
+.fakeclock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;color:rgba(255,255,255,.55);border-bottom:1px dashed var(--line);margin-top:8cqw}
+.fakeclock b{font:800 24cqw/1 var(--display);letter-spacing:.01em}
+.fakeclock span{font:500 3.6cqw var(--mono);letter-spacing:.08em}
+.mid{display:flex;flex-direction:column;gap:1.6cqw;margin-top:4cqw}
+.eyebrow{margin:0;font:500 3.3cqw var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.days{display:flex;align-items:baseline;gap:3cqw;line-height:.86}
+.days #d{font:800 33cqw/.86 var(--display);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.days .unit{font:500 4cqw var(--mono);letter-spacing:.18em;color:var(--dim)}
+.hms{font:500 8cqw var(--mono);letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--text)}
+.bar{height:1.1cqw;background:var(--line);border-radius:2cqw;overflow:hidden;margin-top:1.6cqw}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:2cqw}
+.due{margin:0;font:400 3.3cqw var(--mono);letter-spacing:.06em;color:var(--dim)}
+.ladder{list-style:none;margin:5cqw 0 0;padding-block:0;display:flex;flex-direction:column;gap:2.4cqw;flex:1;min-height:0}
+.ladder li{display:grid;grid-template-columns:3.2cqw 1fr auto;align-items:center;column-gap:3.4cqw;font-size:max(13px,4cqw);line-height:1.2}
+.ladder .dot{width:3.2cqw;height:3.2cqw;border-radius:50%;border:.6cqw solid var(--dim)}
+.ladder .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ladder .dt{font:400 3.2cqw var(--mono);letter-spacing:.06em;color:var(--dim)}
+.ladder li.done{color:var(--dim)}
+.ladder li.done .dot{background:var(--dim);border-color:var(--dim)}
+.ladder li.done .lbl{text-decoration:line-through;text-decoration-thickness:1px}
+.ladder li.next{font-weight:600}
+.ladder li.next .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 1.2cqw rgba(255,154,107,.22)}
+.ladder li.next .dt{color:var(--accent)}
+.dockzone{flex:0 0 11%}
+@media(max-width:480px){
+  .stage{padding-block:0;gap:0}
+  .screen{width:100%;max-width:none;aspect-ratio:auto;height:calc(100svh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));border-radius:0;box-shadow:none}
+}
+.tools{width:100%;max-width:390px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px 32px;display:flex;flex-direction:column;gap:14px}
+@media(max-width:480px){.tools{padding-top:24px;max-width:560px}}
+.tools h2{margin:0;font:500 13px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.tools p{margin:0;color:var(--dim);font-size:14px;line-height:1.5;max-width:65ch}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font:500 12px var(--mono);letter-spacing:.08em;color:var(--dim)}
+.field input[type=text],.field input[type=datetime-local],.field textarea{
+  width:100%;min-width:0;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:400 14px var(--mono)}
+.field textarea{min-height:150px;resize:vertical;line-height:1.5}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+button{font:600 14px var(--body);background:var(--accent);color:#1B1030;border:0;border-radius:8px;padding:11px 18px;cursor:pointer}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.check{display:flex;gap:10px;align-items:center;font-size:14px;color:var(--text)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<main class="stage">
+  <section class="screen" id="screen" aria-label="Countdown lock screen">
+    <div class="clockzone pad">
+      <div class="fakeclock" id="fakeclock" hidden><b>9:41</b><span>MONDAY, NOVEMBER 23</span></div>
+    </div>
+    <div class="mid pad">
+      <p class="eyebrow" id="title">Capstone submission</p>
+      <div class="days"><span id="d">0</span><span class="unit" id="unit">DAYS</span></div>
+      <div class="hms" id="hms" aria-live="off">00:00:00</div>
+      <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+      <p class="due" id="due"></p>
+    </div>
+    <ol class="ladder pad" id="ladder"></ol>
+    <div class="dockzone"></div>
+  </section>
+
+  <section class="tools" aria-label="Customize">
+    <h2>Make it yours</h2>
+    <p>Change the deadline and milestones, then take a screenshot of the screen above and set it as your lock screen. Turn on the clock preview to check the top third stays clear.</p>
+    <div class="field"><label for="f-title">DEADLINE NAME</label><input type="text" id="f-title" maxlength="32"></div>
+    <div class="field"><label for="f-deadline">DEADLINE</label><input type="datetime-local" id="f-deadline"></div>
+    <div class="field"><label for="f-ms">MILESTONES, ONE PER LINE: YYYY-MM-DD | SHORT LABEL</label><textarea id="f-ms" spellcheck="false"></textarea></div>
+    <div class="row">
+      <button type="button" id="apply">Apply</button>
+      <button type="button" class="ghost" id="reset">Reset sample</button>
+    </div>
+    <label class="check"><input type="checkbox" id="clockToggle"> Preview phone clock</label>
+  </section>
+</main>
+
+<script>
+(function(){
+  var DEFAULT={
+    title:'Capstone submission',
+    start:'2026-11-23T00:00',
+    deadline:'2026-12-18T17:00',
+    ms:'2026-11-27 | Outline locked\n2026-12-02 | First draft done\n2026-12-07 | Peer review back\n2026-12-11 | Final edits\n2026-12-15 | Proof and export\n2026-12-18 | Submit'
+  };
+  var KEY='tminus-lockscreen';
+  function $(id){return document.getElementById(id)}
+  function pad(n){return String(n).padStart(2,'0')}
+  function load(){
+    try{var s=localStorage.getItem(KEY); if(s){var o=JSON.parse(s); if(o&&o.deadline&&o.ms!==undefined) return o;}}catch(e){}
+    return JSON.parse(JSON.stringify(DEFAULT));
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(cfg))}catch(e){}}
+  var cfg=load();
+
+  function parseMs(txt){
+    return String(txt).split('\n').map(function(l){var p=l.split('|');return p.length>=2?[p[0].trim(),p.slice(1).join('|').trim()]:null})
+      .filter(function(p){return p&&/^\d{4}-\d{2}-\d{2}$/.test(p[0])&&p[1]}).slice(0,7);
+  }
+  function fmtShort(ds){
+    var d=new Date(ds+'T12:00');
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase();
+  }
+  function renderLadder(){
+    var ul=$('ladder'); ul.textContent='';
+    var items=parseMs(cfg.ms), now=Date.now(), nextSet=false;
+    items.forEach(function(it){
+      var over=new Date(it[0]+'T23:59:59').getTime()<now;
+      var li=document.createElement('li');
+      if(over){li.className='done'}
+      else if(!nextSet){li.className='next';nextSet=true}
+      var dot=document.createElement('span');dot.className='dot';
+      var lbl=document.createElement('span');lbl.className='lbl';lbl.textContent=it[1];
+      var dt=document.createElement('span');dt.className='dt';dt.textContent=fmtShort(it[0]);
+      li.appendChild(dot);li.appendChild(lbl);li.appendChild(dt);ul.appendChild(li);
+    });
+  }
+  function renderStatic(){
+    $('title').textContent=cfg.title||'Deadline';
+    var end=new Date(cfg.deadline);
+    $('due').textContent=end.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase()+' · '+end.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    renderLadder();
+  }
+  var n=0;
+  function tick(){
+    var now=Date.now(), end=new Date(cfg.deadline).getTime(), st=new Date(cfg.start).getTime();
+    var ms=Math.max(0,end-now);
+    var d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), s=Math.floor(ms%6e4/1e3);
+    $('d').textContent=d;
+    $('unit').textContent=d===1?'DAY':'DAYS';
+    $('hms').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+    var span=end-st, pct=span>0?Math.min(1,Math.max(0,(now-st)/span)):1;
+    $('fill').style.width=(pct*100).toFixed(1)+'%';
+    if(++n%60===0) renderLadder();
+  }
+  function fillForm(){
+    $('f-title').value=cfg.title;
+    $('f-deadline').value=cfg.deadline;
+    $('f-ms').value=cfg.ms;
+  }
+  $('apply').addEventListener('click',function(){
+    var dl=$('f-deadline').value;
+    if(!dl) return;
+    cfg.title=$('f-title').value.trim()||'Deadline';
+    cfg.deadline=dl;
+    cfg.ms=$('f-ms').value;
+    var today=new Date(); today.setHours(0,0,0,0);
+    var tzoff=today.getTimezoneOffset()*6e4;
+    cfg.start=new Date(today.getTime()-tzoff).toISOString().slice(0,16);
+    save();renderStatic();tick();
+  });
+  $('reset').addEventListener('click',function(){
+    cfg=JSON.parse(JSON.stringify(DEFAULT));save();fillForm();renderStatic();tick();
+  });
+  $('clockToggle').addEventListener('change',function(e){$('fakeclock').hidden=!e.target.checked});
+
+  fillForm();renderStatic();tick();
+  setInterval(tick,1000);
+})();
+</script>
